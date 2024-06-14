@@ -1,5 +1,6 @@
 import asyncHandler from "express-async-handler";
 import Coach from "../Model/coachModel.js";
+import cloudinary from "../Utils/cloudinary.js";
 
 const createCoach = asyncHandler(async (req, res) => {
   const { firstName, lastName, age, gender, specialties } = req.body;
@@ -72,4 +73,32 @@ const deleteCoach = asyncHandler(async (req, res) => {
   }
 });
 
-export { createCoach, getAllCoachs, getSingleCoach, updateCoach, deleteCoach };
+const updatePhoto = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  cloudinary.uploader.upload(req.file.path, async (err, result) => {
+    if (err) {
+      return res.status(500).json({
+        success: false,
+        message: err,
+      });
+    }
+    const coach = await Coach.findById(id);
+    coach.photo = result.url || coach.photo;
+    const updatedCoach = await coach.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Uploaded",
+      updatedCoach,
+    });
+  });
+});
+
+export {
+  createCoach,
+  getAllCoachs,
+  getSingleCoach,
+  updateCoach,
+  deleteCoach,
+  updatePhoto,
+};
