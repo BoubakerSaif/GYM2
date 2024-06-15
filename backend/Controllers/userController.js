@@ -1,6 +1,7 @@
 import asyncHandler from "express-async-handler";
 import User from "../Model/userModel.js";
 import generateToken from "../Utils/generateToken.js";
+import cloudinary from "../Utils/cloudinary.js";
 
 // @desc Auth user/set token
 // route POST /api/users/auth
@@ -193,6 +194,26 @@ const chooseMembership = asyncHandler(async (req, res) => {
   }
 });
 
+const updatePhoto = asyncHandler(async (req, res) => {
+  cloudinary.uploader.upload(req.file.path, async (err, result) => {
+    if (err) {
+      return res.status(500).json({
+        success: false,
+        message: err,
+      });
+    }
+    const user = await User.findById(req.user._id);
+    user.photo = result.url || user.photo;
+    const updatedUser = await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Uploaded",
+      updatedUser,
+    });
+  });
+});
+
 export {
   authUser,
   registerUser,
@@ -202,4 +223,5 @@ export {
   blockUnblockUser,
   chooseMembership,
   getAllUsers,
+  updatePhoto,
 };

@@ -4,6 +4,10 @@ const courseSchema = mongoose.Schema(
   {
     sportType: { type: String, required: true },
     planning: { type: String, required: true },
+    date: {
+      type: Date,
+      required: true,
+    },
     participants: [
       {
         type: mongoose.Schema.Types.ObjectId,

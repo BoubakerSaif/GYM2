@@ -1,37 +1,63 @@
 import asyncHandler from "express-async-handler";
 import Course from "../Model/courseModel.js";
 import User from "../Model/userModel.js";
+import cloudinary from "../Utils/cloudinary.js";
 
 const createCourse = asyncHandler(async (req, res) => {
-  const { sportType, planning, trainedBy } = req.body;
+  const { sportType, planning, trainedBy, date } = req.body;
+  try {
+    cloudinary.uploader.upload(req.file.path, async (err, result) => {
+      if (err) {
+        return res.status(500).json({
+          success: false,
+          message: err,
+        });
+      }
+      const course = await Course.create({
+        sportType,
+        planning,
+        trainedBy,
+        date,
+        photo: result.url,
+      });
 
-  const course = await Course.create({
-    sportType,
-    planning,
-    trainedBy,
-  });
-
-  if (course) {
-    res.status(201).json(course);
-  } else {
+      res.status(200).json(course);
+    });
+  } catch (error) {
     res.staus(400);
-    throw new Error("Smothing Went Wrong");
+    throw new Error(error);
   }
 });
 
 const updateCourse = asyncHandler(async (req, res) => {
-  const { sportType, planning } = req.body;
+  const { sportType, planning, trainedBy, date } = req.body;
   const { id } = req.params;
-  const course = await Course.findById(id);
-  if (course) {
-    course.sportType = sportType || course.sportType;
-    course.planning = planning || course.planning;
+  try {
+    cloudinary.uploader.upload(req.file.path, async (err, result) => {
+      if (err) {
+        return res.status(500).json({
+          success: false,
+          message: err,
+        });
+      }
+      const course = await Course.findById(id);
+      if (course) {
+        course.sportType = sportType || course.sportType;
+        course.planning = planning || course.planning;
+        course.trainedBy = trainedBy || course.trainedBy;
+        course.date = date || course.date;
+        course.photo = result.url || course.photo;
 
-    const updatedCourse = await course.save();
-    res.status(201).json(updatedCourse);
-  } else {
+        const updatedCourse = await course.save();
+        res.status(201).json(updatedCourse);
+      } else {
+        res.status(401);
+        throw new Error("Course can't be updated");
+      }
+    });
+  } catch (error) {
     res.status(401);
-    throw new Error(" Course can't be updated");
+    throw new Error(error);
   }
 });
 
